@@ -1,0 +1,89 @@
+.background-image{
+    margin: 10px;
+    text-align: center;
+    position: relative;
+    height: 80vh;
+    background: url(/assets/BGImg.png) no-repeat center center / cover;
+    display: flex;
+    justify-content: center;
+}
+
+.overlay{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.75);
+    padding: 20px;
+    border-radius: 25px;
+    background: black;
+    color: white;
+    white-space: nowrap;
+}
+
+.title{
+    font-size: 50px;
+}
+
+.overlay span{
+    color: #ff5101
+}
+
+.btn{
+    background-color: #ff5101;
+    color: white;
+    padding: 10px 15px 10px 15px;
+    margin: 10px;
+    border-radius: 20px;
+}
+
+.welcome-features{
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+    gap: 1.5rem;
+    padding: 3rem 2rem;
+    flex-wrap: wrap;
+}
+
+.feature-card{
+    flex: 1 1 280px;
+    background: #ffffff1a;
+    padding: 1.5rem;
+    border-radius: 15px;
+    text-align: center;
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 15px #00000040;
+    transition: transform .3s, background .3s;
+}
+
+.icon-style{
+    color: #ff5101;
+    font-size: 45px;
+    padding-bottom: 10px;
+}
+
+.card-title{
+    color: #154ea1;
+    font-weight: bold;
+}
+
+.feature-title{
+    color: #ff5101;
+    font-weight: bold;
+    text-align: center;
+}
+
+.footer{
+    background-color: #ff5101;
+    color: white;
+    text-align: center;
+    margin: 10px;
+    position: relative;
+    bottom: 0;
+    width: 100%;
+    margin-top: 10px;
+    padding: 15px 10px 2px 10px;
+}

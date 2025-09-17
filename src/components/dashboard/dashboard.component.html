@@ -1,0 +1,121 @@
+<div class="container">
+    <div class="navbar">
+        <div class="row left-nav" style="width: 100%;">
+            <div class="col-md-6" style="display: contents">
+                <img src="assets/CivicBridgeLogo.png" alt="Civic Bridge Logo" class="navbar-logo" height="60px">
+                <div class="input-group">
+                    <input type="text" class="form-control" [(ngModel)]="searchTerm" placeholder="Search..." >
+                    <button class="search-btn" type="button" (click)="fetchData()"> Search </button>
+                </div>
+            </div>
+
+            <div class="col right-nav">
+                <button type="button" class="btn btn-details btn-margin" (click)="navigateToAll()"> <i class="fas fa-list me-2"></i> All Concerns </button>
+                <button type="button" class="btn btn-details btn-margin" (click)="navigateToMyConcerns()"> <i class="fas fa-user-check me-2"></i> My Concerns </button>
+                <button type="button" class="btn btn-details" (click)="openUploadPopup()"> <i class="fas fa-upload me-2"></i> Upload Concerns </button>
+                    <div class="popup-overlay" *ngIf="showUploadPopup">
+                        <div class="popup-content">
+                            <h3 class="display-style mb-3">Upload New Concern</h3>
+                            <form [formGroup]="uploadForm" (ngSubmit)="submitConcern()" class="overlay-style">
+                        
+                            <input type="text" formControlName="title" placeholder="Concern Title" style="border-radius: 5px; padding-left: 5px;" required /> 
+                                <div class="error-message" *ngIf="uploadForm.get('title')?.touched && uploadForm.get('title')?.invalid">
+                                    Title is required.      </div>               
+                            <input type="text" formControlName="imageUrl" placeholder="Paste image URL here" style="border-radius: 5px; padding-left: 5px;" required /> 
+                                <div class="error-message" *ngIf="uploadForm.get('imageUrl')?.touched && uploadForm.get('imageUrl')?.invalid">
+                                    Image URL is required.
+                                </div>
+                       
+                            <textarea formControlName="description" placeholder="Concern Description" style="border-radius: 5px; padding-left: 5px;" required></textarea> 
+                                <div class="error-message" *ngIf="uploadForm.get('description')?.touched && uploadForm.get('description')?.invalid">
+                                    Description is required.   </div>                                           
+                            <select formControlName="location" class="p-1" required>
+                                <option value="" disabled selected>Select Location</option>
+                                <option value="Hyderabad">Hyderabad</option>
+                                <option value="Bangalore">Bangalore</option>
+                                <option value="Chennai">Chennai</option>
+                                <option value="Delhi">Delhi</option>
+                                <option value="Mumbai">Mumbai</option>
+                            </select>
+                            <div class="error-message" *ngIf="uploadForm.get('location')?.touched && uploadForm.get('location')?.invalid">
+                                Location is required.
+                            </div>
+                            <div class="concerns-btn">
+                                <button type="submit" class="submit-btn">Submit</button>
+                                <button type="button" (click)="closeUploadPopup()" class="cancel-btn">Cancel</button>
+                            </div>
+                            </form>
+                        </div>
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="marque-container">
+        <marquee behavior="scroll" direction="left" scrollamount="5">
+            <span class="marquee-text"> Welcome to Civic Bridge Dashboard - Empowering citizens and bridging the gap between people and government.</span>
+        </marquee>
+    </div>
+
+    <div class="main-content row">
+        <div class="side-navbar col-md-3">
+            <div class="side-cards">
+                <i class="fas fa-user me-2 icon-style"></i>
+                <h2 class="display-style">Susmitha</h2> 
+                <p class="display-style">User</p>
+                <div class="display-style">
+                    <button type="button" class="btn-logout" (click)="onLogout()"> <i class="fas fa-sign-out-alt"></i> Logout </button>
+                </div>
+                <p class="display-style mt-3">Filter All Concerns By Location.</p>
+                <div class="location-filters">
+                    <button type="button" class="btn btn-filter" (click)= "showConcernsByLocation('Hyderabad')"> <i class="fas fa-map-marker-alt me-2"></i> Hyderabad </button>
+                    <button type="button" class="btn btn-filter" (click)= "showConcernsByLocation('Bangalore')"> <i class="fas fa-map-marker-alt me-2"></i> Bangalore </button>
+                    <button type="button" class="btn btn-filter" (click)= "showConcernsByLocation('Chennai')"> <i class="fas fa-map-marker-alt me-2"></i> Chennai </button>
+                    <button type="button" class="btn btn-filter" (click)= "showConcernsByLocation('Delhi')"> <i class="fas fa-map-marker-alt me-2"></i> Delhi </button>
+                    <button type="button" class="btn btn-filter" (click)= "showConcernsByLocation('Mumbai')"> <i class="fas fa-map-marker-alt me-2"></i> Mumbai </button>
+                </div>
+            </div>
+
+            <div class="side-cards">
+                <i class="fas fa-tachometer-alt me-2 icon-style"></i>
+                <h3 class="display-style" style="font-size: 1.5rem;">Concerns Dashboard</h3>
+                <p class="display-style">Status wise count</p>
+                <div class="location-filters">
+                    <button type="button" class="btn btn-filter" (click)="showConcernsByStatus('Pending')"> <i class="fas fa-hourglass-half me-2"></i> Pending </button>
+                    <button type="button" class="btn btn-filter" (click)="showConcernsByStatus('Resolved')"> <i class="fas fa-check-circle me-2"></i> Resolved </button>
+                    <button type="button" class="btn btn-filter" (click)="showConcernsByStatus('In Progress')"> <i class="fas fa-spinner me-2"></i> In Progress </button>
+                </div>
+            </div>
+
+            <div class="footer">
+                <p>&copy; 2025 Civic Bridge. All rights reserved.</p>
+            </div>
+        </div>
+
+        <div class="content-area col-md-9">
+            <div *ngFor="let concern of concerns" class="concern-card">
+                <h3 class="concern-title">{{ concern.title }}</h3>
+                <img *ngIf="concern.imageUrl"  [src]="concern.imageUrl ? concern.imageUrl : 'assets/concern.png'"   alt="Concern Image" class="concern-image">
+                <p class="concern-description">{{ concern.description }}</p>
+                <p class="concern-location"><i class="fas fa-map-marker-alt"></i> Location: {{ concern.location }}</p>
+                <p class="concern-status"> Status: 
+                    <span [ngClass]="{
+                        'status-pending': concern.status === 'Pending',
+                        'status-completed': concern.status === 'Resolved',
+                        'status-inprogress': concern.status === 'In Progress'
+                        }">
+                        <i *ngIf="concern.status === 'Pending'" class="fas fa-hourglass-half"></i>
+                        <i *ngIf="concern.status === 'Resolved'" class="fas fa-check-circle"></i>
+                        <i *ngIf="concern.status === 'In Progress'" class="fas fa-spinner"></i>
+                        {{ concern.status }}
+                    </span>
+                </p>
+                <p class="concern-comments">
+                  <strong>Comments ({{ concern.commentsCount || 0 }}):</strong> {{ concern.comments || 'No comments yet.' }}
+                </p>
+            </div>
+            <p *ngIf="concerns.length === 0" class="element-style">No concerns found.</p>
+        </div>
+    </div>
+</div>
+

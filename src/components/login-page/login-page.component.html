@@ -1,0 +1,56 @@
+<div class="container">
+    <div class="row">
+        <div class="col-md-7">
+            <img src="assets/login.png" alt="Login Image" class="img-fluid">         
+        </div>
+
+        <div class="col login-form">
+            <div>
+                <h2 class="login-title">{{ isSignup ? 'Sign Up for Civic Bridge' : 'Login to Civic Bridge' }}</h2>
+                <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+                    <div class="mb-3" *ngIf="isSignup">
+                        <input type="text" formControlName="name" placeholder="Please enter your Username"
+                            class="form-control" [ngClass]="{'is-invalid': name?.touched && name?.invalid}">
+                        <div *ngIf="name?.touched && name?.invalid" class="invalid-feedback error-msg">
+                        <small *ngIf="name?.errors?.['required']">Username is required.</small>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <input type="email" class="form-control" id="username" formControlName="email" placeholder="Please enter your Email Id">
+                        <div *ngIf="email?.touched && email?.invalid" class="text-danger mt-1">
+                            <div *ngIf="email?.errors?.['required']" class="error-msg">Email is required.</div>
+                            <div *ngIf="email?.errors?.['email']" class="error-msg">Please enter a valid email address.</div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <input type="password" class="form-control" id="password" formControlName="password" placeholder="Please enter your password">
+                        <div *ngIf="password?.touched && password?.invalid" class="text-danger mt-1">
+                            <div *ngIf="password?.errors?.['required']" class="error-msg">Password is required.</div>
+                            <div *ngIf="password?.errors?.['minlength']" class="error-msg">
+                                Password must be at least 6 characters.
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn">{{ isSignup ? 'Sign Up' : 'Login' }}</button>
+                </form>
+                <p class="text-center mt-3">
+                    <span>
+                        {{ isSignup ? 'Already have an account? ' : "Don't have an account? " }}
+                        <a (click)="toggleForm()" style="color: #ff5101; font-weight: bold; cursor: pointer;">
+                             {{ isSignup ? 'Login' : 'Sign Up' }}
+                        </a>
+                    </span>
+                </p>
+            </div>
+            <div *ngIf="successMessage" class="alert alert-success mt-2 show-msg">
+                {{ successMessage }}
+            </div>
+
+            <div *ngIf="errorMessage" class="alert alert-danger mt-2 show-msg">
+                {{ errorMessage }}
+            </div>
+        </div>
+    </div>
+
+</div>
