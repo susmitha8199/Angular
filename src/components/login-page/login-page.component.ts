@@ -27,7 +27,7 @@ export class LoginPageComponent implements OnInit {
     });
   }
 
-n  onSubmit() {
+  onSubmit() {
     if (!this.loginForm.valid) {
       this.loginForm.markAllAsTouched();
       return;
