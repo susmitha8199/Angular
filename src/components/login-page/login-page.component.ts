@@ -27,7 +27,7 @@ export class LoginPageComponent implements OnInit {
     });
   }
 
-  onSubmit() {
+n  onSubmit() {
     if (!this.loginForm.valid) {
       this.loginForm.markAllAsTouched();
       return;
@@ -58,6 +58,9 @@ export class LoginPageComponent implements OnInit {
     } else {
       this.authService.login(formData.email, formData.password).subscribe({
         next: (res: any) => {
+          let data = typeof res === 'string' ? JSON.parse(res) : res;
+          localStorage.setItem('role', data.role || 'Test');
+          localStorage.setItem('username', data.username || '');
           this.router.navigate(['/dashboard']);
           this.loginForm.reset();
           this.successMessage = '';

@@ -61,8 +61,8 @@
         <div class="side-navbar col-md-3">
             <div class="side-cards">
                 <i class="fas fa-user me-2 icon-style"></i>
-                <h2 class="display-style">Susmitha</h2> 
-                <p class="display-style">User</p>
+                <h2 class="display-style">{{ getUserName() }}</h2> 
+                <p class="display-style">{{ getUserRole() }}</p>
                 <div class="display-style">
                     <button type="button" class="btn-logout" (click)="onLogout()"> <i class="fas fa-sign-out-alt"></i> Logout </button>
                 </div>

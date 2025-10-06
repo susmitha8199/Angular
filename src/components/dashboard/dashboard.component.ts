@@ -54,6 +54,13 @@ export class DashboardComponent {
     });
   }
 
+  getUserName(): string {
+    return localStorage.getItem('username') || '';
+  }
+  getUserRole(): string {
+    return localStorage.getItem('role') || 'User';
+  }
+
   fetchData() {
     if (this.searchTerm.trim() === '') {
       this.concerns = [...this.allConcerns];
