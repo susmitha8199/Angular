@@ -141,6 +141,7 @@
 .concern-pagination{
     display: flex;
     flex-direction: row;
+    font-size: 15px;
 }
 
 .popup-overlay {

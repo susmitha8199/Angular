@@ -1,2 +1,8 @@
 /* You can add global styles to this file, and also import other style files */
 @import 'node_modules/ngx-toastr/toastr.css';
+@import '@angular/material/prebuilt-themes/indigo-pink.css';
+
+.mdc-notched-outline {
+    top: 7px;
+    height: 70%;
+}
