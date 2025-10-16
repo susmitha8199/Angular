@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { ToastrService } from 'ngx-toastr';
 import { AuthService } from 'src/services/auth.service';  
 
 @Component({
@@ -17,7 +18,7 @@ export class LoginPageComponent implements OnInit {
   successMessage: string = '';
   errorMessage: string = '';
 
-  constructor(private fb: FormBuilder, private router: Router, private http: HttpClient, private authService: AuthService) {}
+  constructor(private fb: FormBuilder, private router: Router, private http: HttpClient, private authService: AuthService, private toastr: ToastrService) {}
 
    ngOnInit() {
     this.loginForm = this.fb.group({
@@ -46,13 +47,21 @@ export class LoginPageComponent implements OnInit {
           this.toggleForm(); // switch to login form
           this.loginForm.get('name')?.reset();
           this.loading = false;
-          this.successMessage = 'Signup successful! Please log in.';
-          this.errorMessage = '';
+          this.toastr.success('Signup successful! Please log in.');
           this.loginForm.reset();  //clear the form fields
           this.isSignup = false;
         },
         error: (err) => {
-          this.errorMessage = err.error || 'Signup failed';
+          this.loading = false;
+          let msg = 'Login failed';
+          try {
+            // Parse if it's a JSON string
+            const parsed = typeof err.error === 'string' ? JSON.parse(err.error) : err.error;
+            msg = parsed.message || msg;
+          } catch (e) {
+            msg = err.error || msg;
+          }
+          this.toastr.error(msg);
         }
       });
     } else {
@@ -64,13 +73,20 @@ export class LoginPageComponent implements OnInit {
           localStorage.setItem('username', data.username || '');
           this.router.navigate(['/dashboard']);
           this.loginForm.reset();
-          this.successMessage = '';
-          this.errorMessage = '';
           this.loading = false;
+          this.toastr.success('Login successful!');
         },
         error: (err) => {
-          this.errorMessage = err.error || 'Login failed';
           this.loading = false;
+          let msg = 'Login failed';
+          try {
+            // Parse if it's a JSON string
+            const parsed = typeof err.error === 'string' ? JSON.parse(err.error) : err.error;
+            msg = parsed.message || msg;
+          } catch (e) {
+            msg = err.error || msg;
+          }
+          this.toastr.error(msg);
         }
       });
     }
