@@ -59,6 +59,7 @@ export class LoginPageComponent implements OnInit {
       this.authService.login(formData.email, formData.password).subscribe({
         next: (res: any) => {
           let data = typeof res === 'string' ? JSON.parse(res) : res;
+          localStorage.setItem('token', data.token || 'sample-token');
           localStorage.setItem('role', data.role || 'Test');
           localStorage.setItem('username', data.username || '');
           this.router.navigate(['/dashboard']);

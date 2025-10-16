@@ -115,11 +115,32 @@
     justify-content: start;
 }
 
+.btn-comment{
+    background-color: #154ea1;
+    color: white;
+    margin-left: 5px;
+    width: 65px;
+    border-radius: 10px;
+    height: 35px;
+    vertical-align: unset;
+}
+
 .footer{
     color: #ff5101;
     text-align: center;
     margin: 10px;
     width: 250px;
+}
+
+.error-msg{
+    font-weight: bold;
+    text-align: left;
+    margin-left: 7px;
+}
+
+.concern-pagination{
+    display: flex;
+    flex-direction: row;
 }
 
 .popup-overlay {

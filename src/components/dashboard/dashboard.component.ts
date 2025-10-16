@@ -1,8 +1,18 @@
 import { HttpClient } from '@angular/common/http';
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { PageEvent } from '@angular/material/paginator';
 import { Router } from '@angular/router';
 import { ConcernService } from 'src/services/concern.service';
+import { MarqueeService } from 'src/services/marquee.service';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatSelectModule } from '@angular/material/select';
+
+export interface Comment {
+  id: number;
+  text: string;
+  userRole: string;
+}
 
 interface Concern {
   id: number;
@@ -11,7 +21,7 @@ interface Concern {
   imageUrl?: string;
   location: string;
   status: string;
-  comments?: string;
+  comments?: Comment[];
   commentsCount?: number;
 }
 
@@ -21,37 +31,79 @@ interface Concern {
   styleUrls: ['./dashboard.component.css']
 })
 
-export class DashboardComponent {
+export class DashboardComponent implements OnInit {
   concerns: Concern[] = [];
   allConcerns: Concern[] = [];
+  totalConcerns = 0;
+  pageSize = 5;
+  currentPage = 0;
   showUploadPopup = false;
   uploadForm!: FormGroup;
+  roleForm!: FormGroup;
   searchTerm: string = '';
   imageError: string = '';
   selectedImage: File | null = null;
+  userRole: string = '';
+  marqueeMessage: string = '';
+  statusCount: any = {};
+  locations: string[] = ['Hyderabad', 'Bangalore', 'Chennai', 'Delhi', 'Mumbai'];
+  statuses: string[] = ['PENDING', 'RESOLVED', 'IN_PROGRESS'];
+  popupType: 'UPLOAD' | 'ROLE' = 'UPLOAD';
+  errorMessage: any;
+  newComments: { [key: number]: string } = {};
+  showCommentBox: { [key: number]: boolean } = {};
 
-  constructor(private router: Router, private http: HttpClient, private fb: FormBuilder, private concernService: ConcernService) {}
+  constructor(private router: Router, private http: HttpClient, private fb: FormBuilder, private concernService: ConcernService, private marqueeService: MarqueeService) {}
 
   ngOnInit() {
     this.uploadForm = this.fb.group({
       title: ['', Validators.required],
-      description: ['', Validators.required],
+      description: ['', Validators.required, Validators.minLength(5)],
       imageUrl: ['', Validators.required],
-      location: ['', Validators.required],  
+      location: ['', Validators.required], 
+      comments: ['']
+    });
+    this.roleForm = this.fb.group({
+            email: ['', [Validators.required, Validators.email]],
+            role: ['USER', Validators.required]
+    });
+    this.userRole = localStorage.getItem('role') || 'USER';
+    this.marqueeService.getMarqueeMessage(this.userRole).subscribe({
+      next: (msg) => this.marqueeMessage = msg,
+      error: (err) => console.error('Error fetching marquee message', err)
     });
     this.navigateToAll();
+    this.loadConcerns(this.currentPage, this.pageSize);
   }
 
   navigateToAll() {
     this.concernService.fetchConcerns().subscribe({
-      next: (data: any) => {
+      next: (data: any[]) => {
         this.allConcerns = data;
-        this.concerns = [...data];
+        this.concerns = data.map(c => ({
+          ...c,
+          comments: c.comments || [] 
+        }));
+        this.totalConcerns = this.allConcerns.length;
+        this.loadStatusCount();
+        this.setPage(0);
       },
       error: (err: any) => {
+        this.totalConcerns = 0;
+        this.allConcerns = [];   
+        this.concerns = []; 
         console.error('Failed to fetch concerns', err);
       }
     });
+  }
+
+  loadStatusCount(): void {
+    if (!this.allConcerns) return;
+    this.statusCount = this.allConcerns.reduce((acc: { [key: string]: number }, concern) => {
+      const status = concern.status?.toUpperCase() || 'UNKNOWN';
+      acc[status] = (acc[status] || 0) + 1;
+      return acc;
+    }, {});
   }
 
   getUserName(): string {
@@ -62,48 +114,158 @@ export class DashboardComponent {
   }
 
   fetchData() {
-    if (this.searchTerm.trim() === '') {
-      this.concerns = [...this.allConcerns];
+    const term = this.searchTerm.trim();
+
+    if (term === '') {
+      // reload all concerns if search is empty
+      this.navigateToAll();
       return;
     }
-    const term = this.searchTerm.toLowerCase();
 
-    this.concerns = this.allConcerns.filter(concern =>
-      concern.title.toLowerCase().includes(term) ||
-      concern.description.toLowerCase().includes(term) ||
-      concern.location.toLowerCase().includes(term) ||
-      concern.status.toLowerCase().includes(term)
-    );
+    this.concernService.searchConcerns(term).subscribe({
+      next: (data) => {
+        this.concerns = data;
+        this.allConcerns = data;
+        this.totalConcerns = this.allConcerns.length;
+        this.setPage(0)
+      },
+      error: (err) => {
+        this.totalConcerns = 0;
+        this.allConcerns = [];   
+        this.concerns = [];  
+        console.error('Search failed', err);}
+    });
   }
 
   showConcernsByLocation(location: string){
     this.concernService.locationBasedConcerns(location).subscribe({
       next: (data) => {
-        this.concerns = data; 
+        this.allConcerns = data.map(c => ({
+          ...c,
+          comments: Array.isArray(c.comments) ? c.comments : []
+        })) as Concern[];
+        this.concerns = data.map(c => ({
+          ...c,
+          comments: Array.isArray(c.comments) ? c.comments : []
+        })) as Concern[]; 
+        this.totalConcerns = this.allConcerns.length;
+        this.setPage(0);
+        this.errorMessage = '';
       },
-      error: (err) => console.error(err)
+      error: (err) => {
+        if (err.status === 404 && err.error?.message) {
+          this.concerns = []; // clear old data
+          this.totalConcerns = 0;
+          this.allConcerns = [];
+          this.errorMessage = err.error.message; 
+        } else {
+          this.errorMessage = 'Failed to fetch concerns. Please try again later.';
+        }
+      }
     });
   }
 
   showConcernsByStatus(status: string){
     this.concernService.statusBasedConcerns(status).subscribe({
       next: (data) => {
-        this.concerns = data; 
+        this.concerns = data.map(c => ({
+          ...c,
+          comments: Array.isArray(c.comments) ? c.comments : []
+        })) as Concern[];
+        this.allConcerns = data.map(c => ({
+          ...c,
+          comments: Array.isArray(c.comments) ? c.comments : []
+        })) as Concern[];
+        this.totalConcerns = this.allConcerns.length;
+        this.setPage(0)
       },
-      error: (err) => console.error(err)
+      error: (err) => {
+        this.concerns = []; // clear old data
+        this.totalConcerns = 0;
+        this.allConcerns = [];
+        console.error('Failed to fetch concerns by status', err);
+      }
     });
   }
 
-  navigateToMyConcerns(){
-    alert('Navigating to My Concerns');
+  changeStatus(concern: any) {
+    this.concernService.updateStatus(concern.id, concern.status).subscribe({
+      next: (updated) => {
+        concern.status = updated.status;
+      },
+      error: (err) => {
+        console.error('Failed to update status', err);
+      }
+    });
+  }
+
+  toggleCommentBox(concern: any) {
+    this.showCommentBox[concern.id] = !this.showCommentBox[concern.id];
+  }
+
+  addComment(concern: any) {
+    const commentText = this.newComments[concern.id]?.trim();
+    const userRole = this.userRole; 
+    const username = localStorage.getItem('username') || 'Anonymous';
+
+    if (!commentText) {
+      alert('Please enter a comment.');
+      return;
+    }
+
+    this.concernService.addComment(concern.id, commentText, userRole).subscribe({
+      next: (res: any) => {
+        concern.comments = concern.comments || [];
+        concern.comments.push({
+          id: res.id,       
+          text: commentText,
+          userRole: userRole
+        });
+        console.log('Comment added:', res);
+        concern.commentsCount = concern.comments.length;
+        this.newComments[concern.id] = '';  // Reset input and hide box
+        this.showCommentBox[concern.id] = false;
+      },
+      error: (err) => {
+        console.error('Failed to add comment', err);
+        alert('Failed to add comment. Try again.');
+      }
+    });
+  }
+
+  removeComment(concern: any, comment: any) {
+    if (!confirm('Are you sure you want to delete this comment?')) return;
+
+    this.concernService.deleteComment(comment.id).subscribe({
+      next: () => {
+        concern.comments = (concern.comments as any[]).filter((c:any) => c.id !== comment.id);
+        concern.commentsCount = concern.comments.length;
+      },
+      error: (err) => {
+        console.error('Failed to delete comment', err);
+        alert('Failed to delete comment. Try again.');
+      }
+    });
+  }
+
+  openRolePopup() {
+        this.popupType = 'ROLE';
+        this.showUploadPopup = true;
+        this.roleForm.reset({
+          email: '',
+          role: 'USER'
+        });
   }
 
   openUploadPopup() {
+    this.popupType = 'UPLOAD';
     this.showUploadPopup = true;
     this.uploadForm.reset({
       title: '',
       description: '',
-      location: ''  
+      location: '',
+      email: '',
+      access: ''
     });
     this.selectedImage = null;
     this.imageError = '';
@@ -112,22 +274,21 @@ export class DashboardComponent {
   closeUploadPopup() {
     this.showUploadPopup = false;
     this.uploadForm.reset();
+    this.roleForm.reset();
+    this.roleForm.reset({ role: 'USER' });
     this.selectedImage = null;
   }
 
   submitConcern() {
     this.uploadForm.markAllAsTouched();
-
+    const body = this.uploadForm.value;
+    if (!body.comments) {
+      body.comments = ''; 
+    }
     if (this.uploadForm.invalid) return;
-    const concern = {
-      title: this.uploadForm.value.title,
-      description: this.uploadForm.value.description,
-      location: this.uploadForm.value.location,
-      imageUrl: this.uploadForm.value.imageUrl 
-    };
-
-    this.concernService.uploadConcern(concern).subscribe({
+    this.concernService.uploadConcern(this.uploadForm.value).subscribe({
       next: (res: any) => {
+        this.concerns.unshift(res);
         this.closeUploadPopup();
         this.navigateToAll();
       },
@@ -137,7 +298,55 @@ export class DashboardComponent {
     });
   }
 
+  submitRoleChange() {
+    this.roleForm.markAllAsTouched();
+    if (this.roleForm.valid) {
+      const email = this.roleForm.get('email')?.value;
+      const role = this.roleForm.get('role')?.value.toUpperCase();
+
+      this.concernService.updateUserRole(email, role).subscribe({
+        next: (res: any) => {
+          alert(res);
+          this.closeUploadPopup();
+          this.roleForm.reset();  // reset with default selection
+        },
+        error: (err) => {
+          console.error(err);
+        }
+      });
+    }
+  }
+
+  loadConcerns(page: number = 0, size: number = 10) {
+    this.concernService.fetchConcernsPaged(page, size).subscribe({
+      next: (res: any) => {
+        this.concerns = res.content; 
+        this.totalConcerns = res.totalElements; 
+        this.currentPage = page;
+        this.pageSize = size;
+        this.setPage(0);
+      },
+      error: (err) => console.error('Failed to fetch concerns', err)
+    });
+  }
+
+  setPage(pageIndex: number) {
+    this.currentPage = pageIndex;
+    const start = pageIndex * this.pageSize;
+    const end = start + this.pageSize;
+    this.concerns = this.allConcerns.slice(start, end);
+  }
+
+  onPageChange(event: PageEvent) {
+    this.loadConcerns(event.pageIndex, event.pageSize);
+    this.pageSize = event.pageSize;
+    this.setPage(event.pageIndex);
+  }
+
   onLogout() {
+    localStorage.removeItem('token');  
+    localStorage.removeItem('role');   
+    localStorage.removeItem('email');
     this.router.navigate(['/login']);
   }
 

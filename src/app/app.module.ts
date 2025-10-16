@@ -7,6 +7,9 @@ import { HomePageComponent } from '../components/home-page/home-page.component';
 import { LoginPageComponent } from '../components/login-page/login-page.component';
 import { DashboardComponent } from '../components/dashboard/dashboard.component';
 import { HttpClientModule } from '@angular/common/http';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatTableModule } from '@angular/material/table';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 @NgModule({
   declarations: [
@@ -21,7 +24,10 @@ import { HttpClientModule } from '@angular/common/http';
     AppRoutingModule,
     ReactiveFormsModule,
     FormsModule,
-    HttpClientModule
+    HttpClientModule,
+    MatPaginatorModule ,
+    MatTableModule,
+    BrowserAnimationsModule
   ],
   
   providers: [],

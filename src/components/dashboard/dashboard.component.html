@@ -11,9 +11,9 @@
 
             <div class="col right-nav">
                 <button type="button" class="btn btn-details btn-margin" (click)="navigateToAll()"> <i class="fas fa-list me-2"></i> All Concerns </button>
-                <button type="button" class="btn btn-details btn-margin" (click)="navigateToMyConcerns()"> <i class="fas fa-user-check me-2"></i> My Concerns </button>
-                <button type="button" class="btn btn-details" (click)="openUploadPopup()"> <i class="fas fa-upload me-2"></i> Upload Concerns </button>
-                    <div class="popup-overlay" *ngIf="showUploadPopup">
+                <button type="button" class="btn btn-details btn-margin" (click)="openRolePopup()" *ngIf="userRole === 'ADMIN'"> <i class="fas fa-user-check me-2"></i> Change Role Access </button>
+                <button type="button" class="btn btn-details" (click)="openUploadPopup()" *ngIf="userRole !== 'ADMIN'"> <i class="fas fa-upload me-2"></i> Upload Concerns </button>
+                    <div class="popup-overlay" *ngIf="showUploadPopup && popupType === 'UPLOAD'">
                         <div class="popup-content">
                             <h3 class="display-style mb-3">Upload New Concern</h3>
                             <form [formGroup]="uploadForm" (ngSubmit)="submitConcern()" class="overlay-style">
@@ -31,19 +31,45 @@
                                     Description is required.   </div>                                           
                             <select formControlName="location" class="p-1" required>
                                 <option value="" disabled selected>Select Location</option>
-                                <option value="Hyderabad">Hyderabad</option>
-                                <option value="Bangalore">Bangalore</option>
-                                <option value="Chennai">Chennai</option>
-                                <option value="Delhi">Delhi</option>
-                                <option value="Mumbai">Mumbai</option>
+                                <option *ngFor="let loc of locations" [value]="loc">{{ loc }}</option>
                             </select>
                             <div class="error-message" *ngIf="uploadForm.get('location')?.touched && uploadForm.get('location')?.invalid">
                                 Location is required.
                             </div>
+                            <input type="text" formControlName="comments" placeholder="Add Concern Comments" style="border-radius: 5px; padding-left: 5px;" />
                             <div class="concerns-btn">
                                 <button type="submit" class="submit-btn">Submit</button>
                                 <button type="button" (click)="closeUploadPopup()" class="cancel-btn">Cancel</button>
                             </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="popup-overlay" *ngIf="showUploadPopup && popupType === 'ROLE'">
+                        <div class="popup-content">
+                            <h3 class="display-style mb-3">Change User Role</h3>
+                            <form [formGroup]="roleForm" (ngSubmit)="submitRoleChange()" class="overlay-style">
+                                
+                                <input type="email" formControlName="email" placeholder="User Email" required />
+                    
+                                <div *ngIf="roleForm.get('email')?.touched && roleForm.get('email')?.invalid" class="text-danger mt-1">
+                                    <div *ngIf="roleForm.get('email')?.errors?.['required']" class="error-message">Email is required.</div>
+                                    <div *ngIf="roleForm.get('email')?.errors?.['email']" class="error-message">Please enter a valid email address.</div>
+                                </div>
+                                
+                                <div class="role-options" style="display: flex;">
+                                    <label>
+                                        <input type="radio" formControlName="role" value="USER" /> User
+                                    </label>
+                                    <label style="margin-left: 15px;">
+                                        <input type="radio" formControlName="role" value="ADMIN" /> Admin
+                                    </label>
+                                </div>            
+                                
+                                <div class="concerns-btn">
+                                    <button type="submit" class="submit-btn">Update Role</button>
+                                    <button type="button" (click)="closeUploadPopup()" class="cancel-btn">Cancel</button>
+                                </div>
                             </form>
                         </div>
                     </div>
@@ -53,7 +79,7 @@
 
     <div class="marque-container">
         <marquee behavior="scroll" direction="left" scrollamount="5">
-            <span class="marquee-text"> Welcome to Civic Bridge Dashboard - Empowering citizens and bridging the gap between people and government.</span>
+            <span class="marquee-text"> {{ marqueeMessage }} </span>
         </marquee>
     </div>
 
@@ -68,11 +94,7 @@
                 </div>
                 <p class="display-style mt-3">Filter All Concerns By Location.</p>
                 <div class="location-filters">
-                    <button type="button" class="btn btn-filter" (click)= "showConcernsByLocation('Hyderabad')"> <i class="fas fa-map-marker-alt me-2"></i> Hyderabad </button>
-                    <button type="button" class="btn btn-filter" (click)= "showConcernsByLocation('Bangalore')"> <i class="fas fa-map-marker-alt me-2"></i> Bangalore </button>
-                    <button type="button" class="btn btn-filter" (click)= "showConcernsByLocation('Chennai')"> <i class="fas fa-map-marker-alt me-2"></i> Chennai </button>
-                    <button type="button" class="btn btn-filter" (click)= "showConcernsByLocation('Delhi')"> <i class="fas fa-map-marker-alt me-2"></i> Delhi </button>
-                    <button type="button" class="btn btn-filter" (click)= "showConcernsByLocation('Mumbai')"> <i class="fas fa-map-marker-alt me-2"></i> Mumbai </button>
+                    <button type="button" class="btn btn-filter" *ngFor="let location of locations" (click)= "showConcernsByLocation(location)"> <i class="fas fa-map-marker-alt me-2"></i> {{ location }} </button>
                 </div>
             </div>
 
@@ -81,9 +103,9 @@
                 <h3 class="display-style" style="font-size: 1.5rem;">Concerns Dashboard</h3>
                 <p class="display-style">Status wise count</p>
                 <div class="location-filters">
-                    <button type="button" class="btn btn-filter" (click)="showConcernsByStatus('Pending')"> <i class="fas fa-hourglass-half me-2"></i> Pending </button>
-                    <button type="button" class="btn btn-filter" (click)="showConcernsByStatus('Resolved')"> <i class="fas fa-check-circle me-2"></i> Resolved </button>
-                    <button type="button" class="btn btn-filter" (click)="showConcernsByStatus('In Progress')"> <i class="fas fa-spinner me-2"></i> In Progress </button>
+                    <button type="button" class="btn btn-filter" (click)="showConcernsByStatus('PENDING')"> <i class="fas fa-hourglass-half me-2"></i> Pending: {{ statusCount['PENDING'] || 0 }} </button>
+                    <button type="button" class="btn btn-filter" (click)="showConcernsByStatus('RESOLVED')"> <i class="fas fa-check-circle me-2"></i> Resolved: {{ statusCount['RESOLVED'] || 0 }}  </button>
+                    <button type="button" class="btn btn-filter" (click)="showConcernsByStatus('IN_PROGRESS')"> <i class="fas fa-spinner me-2"></i> In Progress: {{ statusCount['IN_PROGRESS'] || 0 }}  </button>
                 </div>
             </div>
 
@@ -100,21 +122,49 @@
                 <p class="concern-location"><i class="fas fa-map-marker-alt"></i> Location: {{ concern.location }}</p>
                 <p class="concern-status"> Status: 
                     <span [ngClass]="{
-                        'status-pending': concern.status === 'Pending',
-                        'status-completed': concern.status === 'Resolved',
-                        'status-inprogress': concern.status === 'In Progress'
+                        'status-pending': concern.status === 'PENDING',
+                        'status-completed': concern.status === 'RESOLVED',
+                        'status-inprogress': concern.status === 'IN_PROGRESS'
                         }">
-                        <i *ngIf="concern.status === 'Pending'" class="fas fa-hourglass-half"></i>
-                        <i *ngIf="concern.status === 'Resolved'" class="fas fa-check-circle"></i>
-                        <i *ngIf="concern.status === 'In Progress'" class="fas fa-spinner"></i>
+                        <i *ngIf="concern.status === 'PENDING'" class="fas fa-hourglass-half"></i>
+                        <i *ngIf="concern.status === 'RESOLVED'" class="fas fa-check-circle"></i>
+                        <i *ngIf="concern.status === 'IN_PROGRESS'" class="fas fa-spinner"></i>
                         {{ concern.status }}
                     </span>
+
+                      <!-- ADMIN: show status dropdown -->
+                    <select *ngIf="userRole === 'ADMIN'" class="m-2" [(ngModel)]="concern.status" (change)="changeStatus(concern)">
+                        <option value="" disabled selected>Change Status</option>
+                        <option *ngFor="let status of statuses" [value]="status">{{ status }}</option>
+                    </select>
                 </p>
-                <p class="concern-comments">
-                  <strong>Comments ({{ concern.commentsCount || 0 }}):</strong> {{ concern.comments || 'No comments yet.' }}
-                </p>
+                <div class="concern-comments">
+                  <strong>Comments ({{ concern.comments?.length || 0 }}):</strong> 
+                  <ul>
+                    <li *ngFor="let comment of concern.comments">
+                         <strong>{{ comment.userRole }}:</strong> {{ comment.text }}
+                        <button class="btn btn-sm btn-danger ms-2 m-1" (click)="removeComment(concern, comment)" *ngIf="userRole === 'ADMIN'">Delete</button>
+                    </li>
+                    <li *ngIf="!concern.comments || concern.comments.length === 0">No comments yet.</li>
+                  </ul>
+                  <a href="javascript:void(0)" 
+                    class="add-comment-link" 
+                    (click)="toggleCommentBox(concern)">
+                    {{ showCommentBox[concern.id] ? 'Cancel' : 'Add Comment' }}
+                  </a>
+                  <div *ngIf="showCommentBox[concern.id]" class="add-comment-section">
+                    <input type="text" 
+                            [(ngModel)]="newComments[concern.id]" 
+                            placeholder="Enter your comment..." 
+                            class="comment-input" />
+                    <button class="btn btn-comment" (click)="addComment(concern)">Post</button>
+                  </div>
+                </div>
             </div>
-            <p *ngIf="concerns.length === 0" class="element-style">No concerns found.</p>
+            <div *ngIf="totalConcerns >= 6">
+                <mat-paginator class="concern-pagination"  [length]="totalConcerns" [pageSize]="5" [pageSizeOptions]="[5, 10, 20]" (page)="onPageChange($event)" showFirstLastButtons></mat-paginator>
+            </div>
+                <p *ngIf="concerns.length === 0" class="element-style">No concerns found.</p>
         </div>
     </div>
 </div>
