@@ -44,7 +44,7 @@ export class ConcernService {
 
   updateUserRole(email: string, role: string): Observable<any> {
     const body = { email, role }; 
-    return this.http.post(`${this.concernUrl}/role`, body); 
+    return this.http.post(`${this.concernUrl}/role`, body, { responseType: 'text' }); 
   }
 
   fetchConcernsPaged(page: number = 0, size: number = 5): Observable<any> {
@@ -65,6 +65,10 @@ export class ConcernService {
 
   updateStatus(concernId: number, status: string): Observable<any> {
     return this.http.post(`${this.baseUrl}/${concernId}/status`, { status });
+  }
+
+  getStatusCounts(): Observable<{ [key: string]: number }> {
+    return this.http.get<{ [key: string]: number }>(`${this.baseUrl}/status-counts`);
   }
 
 

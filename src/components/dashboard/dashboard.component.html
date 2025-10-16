@@ -36,7 +36,7 @@
                             <div class="error-message" *ngIf="uploadForm.get('location')?.touched && uploadForm.get('location')?.invalid">
                                 Location is required.
                             </div>
-                            <input type="text" formControlName="comments" placeholder="Add Concern Comments" style="border-radius: 5px; padding-left: 5px;" />
+                            <!-- <input type="text" formControlName="comments" placeholder="Add Concern Comments" style="border-radius: 5px; padding-left: 5px;" /> -->
                             <div class="concerns-btn">
                                 <button type="submit" class="submit-btn">Submit</button>
                                 <button type="button" (click)="closeUploadPopup()" class="cancel-btn">Cancel</button>
