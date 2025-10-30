@@ -3,7 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { PageEvent } from '@angular/material/paginator';
 import { Router } from '@angular/router';
-import { ConcernService } from 'src/services/concern.service';
+import { ConcernService, ReactionType } from 'src/services/concern.service';
 import { MarqueeService } from 'src/services/marquee.service';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatSelectModule } from '@angular/material/select';
@@ -13,6 +13,17 @@ export interface Comment {
   id: number;
   text: string;
   userRole: string;
+  username?: string;
+  createdAt?: string;
+  likes?: number;
+  dislikes?: number;
+  reactions: CommentReaction[];
+}
+
+export interface CommentReaction {
+  id: number;
+  username: string;
+  type: 'LIKE' | 'DISLIKE';
 }
 
 interface Concern {
@@ -56,6 +67,7 @@ export class DashboardComponent implements OnInit {
   pendingCount!: number;
   inProgressCount!: number;
   resolvedCount!: number;
+  username: string = localStorage.getItem('username') || 'guest';
 
   constructor(private router: Router, private http: HttpClient, private fb: FormBuilder, private concernService: ConcernService, private marqueeService: MarqueeService, private toastr: ToastrService,) {}
 
@@ -123,6 +135,7 @@ export class DashboardComponent implements OnInit {
   getUserName(): string {
     return localStorage.getItem('username') || '';
   }
+  
   getUserRole(): string {
     return localStorage.getItem('role') || 'User';
   }
@@ -219,21 +232,17 @@ export class DashboardComponent implements OnInit {
   addComment(concern: any) {
     const commentText = this.newComments[concern.id]?.trim();
     const userRole = this.userRole; 
-    const username = localStorage.getItem('username') || 'Anonymous';
+    // const username = localStorage.getItem('username') || 'Anonymous';
 
     if (!commentText) {
-      alert('Please enter a comment.');
+      this.toastr.error('Comment cannot be empty');
       return;
     }
 
     this.concernService.addComment(concern.id, commentText, userRole).subscribe({
       next: (res: any) => {
         concern.comments = concern.comments || [];
-        concern.comments.push({
-          id: res.id,       
-          text: commentText,
-          userRole: userRole
-        });
+        concern.comments.push(res);
         console.log('Comment added:', res);
         concern.commentsCount = concern.comments.length;
         this.newComments[concern.id] = '';  // Reset input and hide box
@@ -241,6 +250,7 @@ export class DashboardComponent implements OnInit {
         this.toastr.success('Comment added successfully');
       },
       error: (err) => {
+        console.error('Failed to add comment', err);
         this.toastr.error('Failed to add comment. Try again.');
       }
     });
@@ -261,6 +271,47 @@ export class DashboardComponent implements OnInit {
       }
     });
   }
+
+  likeComment(comment: Comment) {
+    this.react(comment, ReactionType.LIKE);
+  }
+
+  dislikeComment(comment: Comment) {
+    this.react(comment, ReactionType.DISLIKE);
+  }
+
+  private react(comment: Comment, type: ReactionType) {
+    this.concernService.reactToComment(comment.id, this.username, type)
+      .subscribe({
+        next: (updatedComment: any) => {
+          // update likes/dislikes in UI
+          comment.likes = updatedComment.likes;
+          comment.dislikes = updatedComment.dislikes;
+          comment.reactions = updatedComment.reactions;
+        },
+        error: (err) => {
+          console.error('Failed to react', err);
+        }
+      });
+  }
+
+
+  // Format time like "2 hours ago"
+  getTimeAgo(createdAt: string): string {
+    if (!createdAt) return '';
+    const time = new Date(createdAt).getTime();
+    const now = new Date().getTime();
+    const diffMs = now - time;
+    const diffMins = Math.floor(diffMs / 60000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    const diffDays = Math.floor(diffHours / 24);
+    return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+  }
+
 
   openRolePopup() {
         this.popupType = 'ROLE';

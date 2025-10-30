@@ -142,8 +142,20 @@
                   <strong>Comments ({{ concern.comments?.length || 0 }}):</strong> 
                   <ul>
                     <li *ngFor="let comment of concern.comments">
-                         <strong>{{ comment.userRole }}:</strong> {{ comment.text }}
+                        <strong>{{ comment.userRole }}:</strong> {{ comment.text }}
                         <button class="btn btn-sm btn-danger ms-2 m-1" (click)="removeComment(concern, comment)" *ngIf="userRole === 'ADMIN'">Delete</button>
+                        
+                        <div class="comment-meta">
+                            <small style="font-size: 1rem;">{{ getTimeAgo(comment.createdAt || '') }}</small>
+                            <span class="like-dislike">
+                                <button (click)="likeComment(comment)" title="Like">
+                                 <i class="fa fa-thumbs-up"></i>  {{ comment.likes || 0 }}
+                                </button>
+                                <button (click)="dislikeComment(comment)" title="Dislike">
+                                 <i class="fa fa-thumbs-down"></i>  {{ comment.dislikes || 0 }}
+                                </button>
+                            </span>
+                        </div>
                     </li>
                     <li *ngIf="!concern.comments || concern.comments.length === 0">No comments yet.</li>
                   </ul>

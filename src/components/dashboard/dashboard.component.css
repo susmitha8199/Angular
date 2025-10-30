@@ -107,6 +107,29 @@
     padding: 0 10px 10px 10px;
 }
 
+.comment-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  color: gray;
+  margin-top: 4px;
+}
+
+.like-dislike button {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  margin-left: 8px;
+  font-size: 0.9rem;
+  transition: transform 0.1s;
+}
+
+.like-dislike button:hover {
+  transform: scale(1.1);
+}
+
+
 .btn-filter{
     background-color: #154ea1;
     color: white;
